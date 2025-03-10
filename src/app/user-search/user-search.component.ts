@@ -4,6 +4,8 @@ import { User } from './model';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
 import { httpResource } from '@angular/common/http';
 import {z as zod} from 'zod'; 
+import {toSignal, toObservable} from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
 
 const UsersSchema = zod.array(
   zod.object({
@@ -42,10 +44,15 @@ const UsersSchema = zod.array(
 })
 export class UserSearchComponent {
   query = signal('');
+  
+  // use it for debouncing quearies
+  debouncedQuery = toSignal(
+      toObservable(this.query).pipe(debounceTime(300))
+  );
 
-  users = httpResource(
-    () => ({
-      url: `${API_URL}?name_like=^${this.query()}`,    }),
+  users = httpResource(() => ({
+      url: `${API_URL}?name_like=^${this.query()}`,
+    }),
     {
       defaultValue: [],
       parse: UsersSchema.parse
