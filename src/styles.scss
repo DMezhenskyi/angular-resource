@@ -90,7 +90,17 @@ body {
   display: block;
   margin: -20px auto 0 auto;
 }
+p {margin: 0}
+label {display: flex; align-items: center; font-size: 10px}
+input[type="checkbox"] {
+  width: 30px;
+  display: block;
+  margin: 0;
+}
 fieldset {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   border-radius: 5px;
   border: 1px solid #e5e0e0;
 }
@@ -112,4 +122,7 @@ fieldset {
   box-sizing: border-box;
   border-radius: 5px;
   margin-top: 15px;
+}
+input[disabled] {
+  opacity: 0.3
 }

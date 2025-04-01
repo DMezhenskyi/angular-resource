@@ -1,6 +1,5 @@
 import { Component, signal } from '@angular/core';
 import { API_URL } from './config';
-import { User } from './model';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
 import { httpResource } from '@angular/common/http';
 import {z as zod} from 'zod'; 
@@ -18,9 +17,13 @@ const UsersSchema = zod.array(
   selector: 'app-user-search',
   imports: [MatProgressBarModule],
   template: `
-    <fieldset>
+    <fieldset style="margin-bottom: 15px">
       <legend>Users Search</legend>
       <input (input)="query.set($any($event.target).value)" type="search" placeholder="Search...">
+      <label>
+        <input type="checkbox" [checked]="disabled()" (change)="disabled.set($any($event.target).checked)" />
+        <p>Disable Live Search</p>
+      </label>
     </fieldset>
     @if (users.isLoading()) {
       <mat-progress-bar mode="query" />
@@ -28,11 +31,6 @@ const UsersSchema = zod.array(
     @if(users.error()) {
       <div class="error">Couldn't fetch data...</div>
     }
-    <section class="actions">
-      <button (click)="users.reload()">Reload</button>
-      <button (click)="addUser()">Add User</button>
-      <button (click)="users.set([])">Clear</button>
-    </section>
     <ul>
       @for (user of users.value(); track user.id) {
         <li>{{ user.name }}</li>
@@ -45,14 +43,28 @@ const UsersSchema = zod.array(
 export class UserSearchComponent {
   query = signal('');
   
-  // use it for debouncing quearies
+  /**
+   * Use it for debouncing/throttle queries
+   * Learn more about it from the tip below  👇
+   * @link https://youtube.com/shorts/XvWzhaRO-d4
+   */
   debouncedQuery = toSignal(
       toObservable(this.query).pipe(debounceTime(300))
   );
 
-  users = httpResource(() => ({
-      url: `${API_URL}?name_like=^${this.query()}`,
-    }),
+  disabled = signal(true);
+
+  users = httpResource(() => {
+      /**
+       * Use this if-block to prevent http calls at certain conditions
+       * Learn more about it from the tip below  👇
+       * @link https://youtube.com/shorts/fzsQ2jXyAcA
+       */
+      if (this.disabled()) {
+        return;
+      }
+      return `${API_URL}?name_like=^${this.debouncedQuery()}`;
+    },
     {
       defaultValue: [],
       parse: UsersSchema.parse
